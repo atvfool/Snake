@@ -1,0 +1,149 @@
+<html>
+	<canvas id="gc" tabindex="1" width="640" height="640"></canvas>
+	<script>
+		var canvas;
+		var canvasContext;
+
+		var gameScale=10;
+
+		var snakeLength;
+		var snakePosition;
+		var currentDirection;
+
+		const DIRECTIONS = {"UP":38,"DOWN":40,"LEFT":37,"RIGHT":39};
+		const SPACE=32;
+
+		window.onload = function()
+		{
+			canvas = document.getElementById("gc");
+			canvasContext = canvas.getContext("2d");
+
+			var centerWidth = (canvas.width/2);
+			var centerHeight = (canvas.height/2);
+			var startingCoords = new Coords(centerWidth, centerHeight);
+
+			snakePosition = new Array(startingCoords);
+
+			var framesPerSecond = 30;
+			setInterval(function()
+						{
+							drawEverything();
+						}, 1000/framesPerSecond);
+			canvas.addEventListener('keydown', function(evt)
+			{
+				if(evt.keyCode > 36 && evt.keyCode < 41)
+				{
+					currentDirection = evt.keyCode;
+					moveSnake();
+				} else if (evt.keyCode=SPACE)
+				{
+					// Pause the game
+					console.log("Pause the game");
+				}
+			});
+		}
+
+		function drawEverything()
+		{
+			// Draws background
+			colorRect(0,0,canvas.width, canvas.height, 'black');
+
+			// Draw Snake
+			drawSnake();
+
+			// Move Snake
+			//moveSnake();
+
+		}
+
+		function drawSnake()
+		{
+			for(i=0;i<snakePosition.length;i+=1)
+			{
+				colorCircle(snakePosition[i].X, snakePosition[i].Y, gameScale/2, 'white');
+			}			
+		}
+
+		function moveSnake()
+		{
+			calculatesnakePosition();
+
+		}
+
+		function calculatesnakePosition()
+		{
+			var leftOffset = 0;
+			var topOffset = 0;
+			switch(currentDirection)
+			{
+				case DIRECTIONS.UP:
+					topOffset = -gameScale;
+					console.log('Up');
+					break;
+				case DIRECTIONS.DOWN:
+					topOffset = gameScale;
+					console.log('Down');
+					break;
+				case DIRECTIONS.LEFT:
+					leftOffset = -gameScale
+					console.log('Left');
+					break;
+				case DIRECTIONS.RIGHT:
+					leftOffset = gameScale
+					console.log('Right');
+					break;
+				default:
+					leftOffset = 0;
+					topOffset = 0;
+					console.log('None');
+					break;
+			}
+			
+			for(i=0;i<snakePosition.length;i+=1)
+			{
+				console.log("Before X:" + snakePosition[i].X + " Y:" + snakePosition[i].Y);
+				snakePosition[i].X = snakePosition[i].X + leftOffset;
+				snakePosition[i].Y += topOffset;
+				console.log("After X:" + snakePosition[i].X + " Y:" + snakePosition[i].Y);
+			}
+			
+		}
+		
+		function colorRect(leftX, topY, width, height, drawColor)
+		{
+			canvasContext.fillStyle=drawColor;
+			canvasContext.fillRect(leftX, topY, width, height);
+		}
+
+		function colorCircle(centerX, centerY, radius, drawColor)
+		{
+			canvasContext.fillStyle=drawColor;
+			canvasContext.beginPath();
+			canvasContext.arc(centerX, centerY, radius, 0, Math.PI*2, true);
+			canvasContext.fill();
+		}
+
+		class Coords
+		{
+			constructor(X, Y)
+			{
+				this.X = X;
+				this.Y = Y;
+				this.direction = DIRECTIONS.LEFT;
+				this.moveafter = 0;
+			}
+
+		}
+
+		function contains(a, obj) 
+		{
+			for (var i = 0; i < a.length; i++) {
+				if (a[i] === obj) {
+					return true;
+				}
+			}
+			return false;
+		}
+		
+	</script>
+</html>
