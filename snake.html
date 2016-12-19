@@ -1,4 +1,10 @@
 <html>
+	<h1>Snake!</h1>
+	<p>This was a simple coding challenge that I did in about an hour. I know it's not perfect but it's fun! Use the arrow keys to play. If it's not responding, try clicking in the black square.
+	<br>
+	Check out the GitHub <a href="https://github.com/atvfool/Snake" target="_blank">Here</a>
+	</p>
+	<br>
 	<canvas id="gc" tabindex="1" width="640" height="640"></canvas>
 	<script>
 		var canvas;
@@ -130,7 +136,7 @@
 			}
 		}
 
-		// draws all parts of the snake
+		// draws all parts of the snake, game scale is halved because I wanted the bits to be 10px wide
 		function drawSnake()
 		{
 			for(i=0;i<snakePosition.length;i+=1)
@@ -139,7 +145,7 @@
 			}
 		}
 		
-		// draws all the food
+		// draws all the food, game scale is halved because I wanted the bits to be 10px wide
 		function drawFood()
 		{
 			for(i=0;i<foodPosition.length;i+=1)
