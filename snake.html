@@ -20,7 +20,12 @@
 		{
 			if(showEndScreen)
 			{
-				snakePosition = [new Coords(canvas.width/2, canvas.height/2),new Coords((canvas.width/2)-gameScale, canvas.height/2)];
+				// set the start postition center screen
+				snakePosition = [new Coords(canvas.width/2, canvas.height/2)];
+				
+				// reset food
+				foodPosition=[];
+				
 				showEndScreen=false;
 			}
 		}
@@ -30,12 +35,8 @@
 			canvas = document.getElementById("gc");
 			canvasContext = canvas.getContext("2d");
 
-			var centerWidth = (canvas.width/2);
-			var centerHeight = (canvas.height/2);
-			var startingCoords = new Coords(centerWidth, centerHeight);
-			var secondCoords = new Coords(centerWidth-gameScale, centerHeight);
-			
-			snakePosition = [startingCoords, secondCoords,new Coords((canvas.width/2)-(gameScale*2), canvas.height/2)];
+			// set the start postion center screen
+			snakePosition = [new Coords(canvas.width/2, canvas.height/2)];
 
 			// makes a 15 big snake for testing purposes
 			//makeBigSnake();
@@ -129,14 +130,16 @@
 			}
 		}
 
+		// draws all parts of the snake
 		function drawSnake()
 		{
 			for(i=0;i<snakePosition.length;i+=1)
 			{
 				colorCircle(snakePosition[i].X, snakePosition[i].Y, gameScale/2, 'white');
-			}			
+			}
 		}
 		
+		// draws all the food
 		function drawFood()
 		{
 			for(i=0;i<foodPosition.length;i+=1)
@@ -145,6 +148,7 @@
 			}
 		}
 
+		// creates new coordinates for food randomly
 		function addRandomFoodPostion()
 		{
 			if(!showEndScreen && !showPaused)
@@ -152,9 +156,11 @@
 				var randX;
 				var randY;
 				
+				// between 64 and 1 to align to grid
 				randX = Math.floor((Math.random() * 64) + 1);
 				randY = Math.floor((Math.random() * 64) + 1);
 				
+				// convert to usable size for the grid
 				randX *= 10;
 				randY *= 10;
 				
@@ -162,6 +168,7 @@
 			}
 		}
 		
+		// calculates the snakes position and checks if any food has been eaten
 		function moveSnake()
 		{
 			if(showEndScreen || showPaused)
@@ -171,11 +178,12 @@
 			calculatesnakePosition();
 			snakeAteFood();
 		}
-
+		// Calculates all the parts of the snakes body and updates the heads next position
 		function calculatesnakePosition()
 		{
 			var leftOffset = 0;
 			var topOffset = 0;
+			// all of these cases prevent the snake from moving back into itself.
 			switch(currentDirection)
 			{
 				case DIRECTIONS.UP:
@@ -200,29 +208,37 @@
 					console.log('None');
 					break;
 			}
+			
 			var prevX=snakePosition[0].X;
 			var prevY=snakePosition[0].Y;
 			
+			// initializing just in case
 			var curX=snakePosition[0].X;
 			var curY=snakePosition[0].Y;
 			
+			// Set the heads next position
 			snakePosition[0].X += leftOffset;
 			snakePosition[0].Y += topOffset;
 			
+			// skip the head
 			for(i=1;i<snakePosition.length;i+=1)
 			{
-				prevX = snakePosition[i].X;
-				prevY = snakePosition[i].Y;
+				// Get body section's current position
+				curX = snakePosition[i].X;
+				curY = snakePosition[i].Y;
 			
-				snakePosition[i].X = curX;
-				snakePosition[i].Y = curY;
+				// set body section's next position
+				snakePosition[i].X = prevX;
+				snakePosition[i].Y = prevY;
 				
-				curX = prevX;
-				curY = prevY;
+				// set for the next body section
+				prevX = curX;
+				prevY = curY;
 			}
 			
 		}
 		
+		// check if the snake hit the wall or itself
 		function isSnakeDead()
 		{
 			// Checks if the snake runs off the board
@@ -253,14 +269,16 @@
 			{
 				if(snakePosition[0].X == foodPosition[i].X && snakePosition[0].Y == foodPosition[i].Y)
 				{
-					// add snake section
+					// add snake section * (Doesn't need to have coordintates because the next movement they will be overwritten anyways)
 					snakePosition.push(new Coords(0,0));
+					// removes the piece of food from the array
 					foodPosition.splice(i, 1);
-					return;
+					return; // exits the loop, only 1 piece of food can be eaten at a time
 				}
 			}
 		}
 		
+		// for testing purposes only, starts off with a snake 15 sections long
 		function makeBigSnake()
 		{
 			snakePosition = [new Coords(canvas.width/2, canvas.height/2)];
@@ -272,12 +290,14 @@
 			
 		}
 		
+		// Draws a color rectangle
 		function colorRect(leftX, topY, width, height, drawColor)
 		{
 			canvasContext.fillStyle=drawColor;
 			canvasContext.fillRect(leftX, topY, width, height);
 		}
 
+		// draws a color circle
 		function colorCircle(centerX, centerY, radius, drawColor)
 		{
 			canvasContext.fillStyle=drawColor;
@@ -286,27 +306,15 @@
 			canvasContext.fill();
 		}
 
+		// class to keep track of coordinates for snake segments and food pieces
 		class Coords
 		{
 			constructor(X, Y)
 			{
 				this.X = X;
 				this.Y = Y;
-				this.NextX = 0;
-				this.NextY = 0;
 			}
 
 		}
-
-		function contains(a, obj) 
-		{
-			for (var i = 0; i < a.length; i++) {
-				if (a[i] === obj) {
-					return true;
-				}
-			}
-			return false;
-		}
-		
 	</script>
 </html>
