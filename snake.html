@@ -5,13 +5,25 @@
 		var canvasContext;
 
 		var gameScale=10;
+		var showEndScreen=false;
+		var showPaused = true;
 
-		var snakeLength;
 		var snakePosition;
-		var currentDirection;
+		var currentDirection=39;
+		
+		var foodPosition=[];
 
 		const DIRECTIONS = {"UP":38,"DOWN":40,"LEFT":37,"RIGHT":39};
 		const SPACE=32;
+
+		function handleMouseClick(evt)
+		{
+			if(showEndScreen)
+			{
+				snakePosition = [new Coords(canvas.width/2, canvas.height/2),new Coords((canvas.width/2)-gameScale, canvas.height/2)];
+				showEndScreen=false;
+			}
+		}
 
 		window.onload = function()
 		{
@@ -21,39 +33,100 @@
 			var centerWidth = (canvas.width/2);
 			var centerHeight = (canvas.height/2);
 			var startingCoords = new Coords(centerWidth, centerHeight);
+			var secondCoords = new Coords(centerWidth-gameScale, centerHeight);
+			
+			snakePosition = [startingCoords, secondCoords,new Coords((canvas.width/2)-(gameScale*2), canvas.height/2)];
 
-			snakePosition = new Array(startingCoords);
-
-			var framesPerSecond = 30;
+			// makes a 15 big snake for testing purposes
+			//makeBigSnake();
+			
+			var framesPerSecond = 10;
 			setInterval(function()
 						{
 							drawEverything();
+							moveSnake();
 						}, 1000/framesPerSecond);
-			canvas.addEventListener('keydown', function(evt)
-			{
-				if(evt.keyCode > 36 && evt.keyCode < 41)
-				{
-					currentDirection = evt.keyCode;
-					moveSnake();
-				} else if (evt.keyCode=SPACE)
-				{
-					// Pause the game
-					console.log("Pause the game");
-				}
-			});
+			var foodRate = 5
+			setInterval(function()
+						{addRandomFoodPostion();}, 1000 * foodRate);
+			canvas.addEventListener('keydown', handleKeyPress);
+			
+			canvas.addEventListener('mousedown', handleMouseClick);
 		}
 
+		function handleKeyPress(evt)
+		{
+			if(evt.keyCode > 36 && evt.keyCode < 41)
+			{
+				switch(evt.keyCode)
+				{
+					case DIRECTIONS.UP:
+						if(currentDirection != DIRECTIONS.DOWN)
+						{currentDirection = evt.keyCode;}
+						break;
+					case DIRECTIONS.DOWN:
+						if(currentDirection != DIRECTIONS.UP)
+						{currentDirection = evt.keyCode;}
+						break;
+					case DIRECTIONS.LEFT:
+						if(currentDirection != DIRECTIONS.RIGHT)
+						{currentDirection = evt.keyCode;}
+						break;
+					case DIRECTIONS.RIGHT:
+						if(currentDirection != DIRECTIONS.LEFT)
+						{currentDirection = evt.keyCode;}
+						break;
+					default:
+						console.log('None');
+						break;
+				}
+				
+				//moveSnake();
+			} else if (evt.keyCode=SPACE)
+			{
+				// Pause the game
+				console.log("Pause the game");
+				showPaused = !showPaused;
+			}
+		}
+		
 		function drawEverything()
 		{
 			// Draws background
 			colorRect(0,0,canvas.width, canvas.height, 'black');
 
+			// Checks if the snake hit itself or the wall
+			if(isSnakeDead())
+			{
+				showEndScreen = true;
+			}
+			
+			// Show Score
+			canvasContext.fillStyle='white';
+			canvasContext.fillText('Score:' + snakePosition.length, 20, 20);
+			
+			if(showEndScreen) // Shows game over screen
+			{
+				canvasContext.fillStyle='white';
+				canvasContext.fillText('Game Over!', 300, 200);
+				canvasContext.fillText('Click to continue', 280, 500);
+				
+				return;
+			}
+			
 			// Draw Snake
 			drawSnake();
-
-			// Move Snake
-			//moveSnake();
-
+			
+			// Draw food
+			drawFood();
+			
+			if(showPaused) // Pauses gameplay and shows pause screen
+			{
+				canvasContext.fillStyle='white';
+				canvasContext.fillText('Paused', 300, 200);
+				canvasContext.fillText('Space to continue', 280, 500);
+				return;
+			}
 		}
 
 		function drawSnake()
@@ -63,11 +136,40 @@
 				colorCircle(snakePosition[i].X, snakePosition[i].Y, gameScale/2, 'white');
 			}			
 		}
+		
+		function drawFood()
+		{
+			for(i=0;i<foodPosition.length;i+=1)
+			{
+				colorCircle(foodPosition[i].X, foodPosition[i].Y, gameScale/2, 'white');
+			}
+		}
 
+		function addRandomFoodPostion()
+		{
+			if(!showEndScreen && !showPaused)
+			{
+				var randX;
+				var randY;
+				
+				randX = Math.floor((Math.random() * 64) + 1);
+				randY = Math.floor((Math.random() * 64) + 1);
+				
+				randX *= 10;
+				randY *= 10;
+				
+				foodPosition.push(new Coords(randX, randY));
+			}
+		}
+		
 		function moveSnake()
 		{
+			if(showEndScreen || showPaused)
+			{
+				return;
+			}
 			calculatesnakePosition();
-
+			snakeAteFood();
 		}
 
 		function calculatesnakePosition()
@@ -77,19 +179,19 @@
 			switch(currentDirection)
 			{
 				case DIRECTIONS.UP:
-					topOffset = -gameScale;
+					if(currentDirection != DIRECTIONS.DOWN)topOffset = -gameScale;
 					console.log('Up');
 					break;
 				case DIRECTIONS.DOWN:
-					topOffset = gameScale;
+					if(currentDirection != DIRECTIONS.UP)topOffset = gameScale;
 					console.log('Down');
 					break;
 				case DIRECTIONS.LEFT:
-					leftOffset = -gameScale
+					if(currentDirection != DIRECTIONS.RIGHT)leftOffset = -gameScale
 					console.log('Left');
 					break;
 				case DIRECTIONS.RIGHT:
-					leftOffset = gameScale
+					if(currentDirection != DIRECTIONS.LEFT)leftOffset = gameScale
 					console.log('Right');
 					break;
 				default:
@@ -98,13 +200,74 @@
 					console.log('None');
 					break;
 			}
+			var prevX=snakePosition[0].X;
+			var prevY=snakePosition[0].Y;
 			
-			for(i=0;i<snakePosition.length;i+=1)
+			var curX=snakePosition[0].X;
+			var curY=snakePosition[0].Y;
+			
+			snakePosition[0].X += leftOffset;
+			snakePosition[0].Y += topOffset;
+			
+			for(i=1;i<snakePosition.length;i+=1)
 			{
-				console.log("Before X:" + snakePosition[i].X + " Y:" + snakePosition[i].Y);
-				snakePosition[i].X = snakePosition[i].X + leftOffset;
-				snakePosition[i].Y += topOffset;
-				console.log("After X:" + snakePosition[i].X + " Y:" + snakePosition[i].Y);
+				prevX = snakePosition[i].X;
+				prevY = snakePosition[i].Y;
+			
+				snakePosition[i].X = curX;
+				snakePosition[i].Y = curY;
+				
+				curX = prevX;
+				curY = prevY;
+			}
+			
+		}
+		
+		function isSnakeDead()
+		{
+			// Checks if the snake runs off the board
+			if(snakePosition[0].X <0 || 
+				snakePosition[0].X > canvas.width || 
+				snakePosition[0].Y < 0 ||
+				snakePosition[0].Y > canvas.height)
+			{
+				return true;
+			} else // Checks if the snake hit itself
+			{
+				for(i=1;i<snakePosition.length;i+=1)
+				{
+					if(snakePosition[i].X == snakePosition[0].X &&
+					   snakePosition[i].Y == snakePosition[0].Y)
+				   {
+						return true;
+				   }
+				}
+			}
+			return false;
+		}
+		
+		// Checks if the snake ate food (checks head only) and makes the snake bigger if they did.
+		function snakeAteFood()
+		{
+			for(i=0; i<foodPosition.length;i+=1)
+			{
+				if(snakePosition[0].X == foodPosition[i].X && snakePosition[0].Y == foodPosition[i].Y)
+				{
+					// add snake section
+					snakePosition.push(new Coords(0,0));
+					foodPosition.splice(i, 1);
+					return;
+				}
+			}
+		}
+		
+		function makeBigSnake()
+		{
+			snakePosition = [new Coords(canvas.width/2, canvas.height/2)];
+			
+			for(i=1; i<15;i+=1)
+			{
+				snakePosition.push(new Coords(snakePosition[0].X - (i*gameScale), snakePosition[0].Y));
 			}
 			
 		}
@@ -129,8 +292,8 @@
 			{
 				this.X = X;
 				this.Y = Y;
-				this.direction = DIRECTIONS.LEFT;
-				this.moveafter = 0;
+				this.NextX = 0;
+				this.NextY = 0;
 			}
 
 		}
